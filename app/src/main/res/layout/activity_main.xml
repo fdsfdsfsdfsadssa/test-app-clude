@@ -1,127 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#0A0A1A"
-    android:layoutDirection="rtl">
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#0A0A1A" android:layoutDirection="rtl">
 
-    <!-- Header bar -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:background="#16163A"
-        android:gravity="center_vertical"
-        android:paddingStart="16dp"
-        android:paddingEnd="8dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="🎮  مدير البلايستيشن"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold"/>
-
-        <ImageButton
-            android:id="@+id/btnSettings"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+    <!-- Header -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="52dp"
+        android:orientation="horizontal" android:background="#16163A"
+        android:gravity="center_vertical" android:paddingStart="12dp" android:paddingEnd="4dp">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:text="🎮 مدير البلايستيشن"
+            android:textColor="#FFFFFF" android:textSize="17sp" android:textStyle="bold"/>
+        <ImageButton android:id="@+id/btnHistory"
+            android:layout_width="44dp" android:layout_height="44dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_manage"
-            android:tint="#AAAACC"/>
+            android:src="@android:drawable/ic_menu_recent_history" android:tint="#AAAACC"/>
+        <ImageButton android:id="@+id/btnSettings"
+            android:layout_width="44dp" android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_manage" android:tint="#AAAACC"/>
     </LinearLayout>
 
-    <!-- Date & status -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:background="#0F0F28">
-
-        <TextView
-            android:id="@+id/tvDate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColor="#6666AA"
-            android:textSize="13sp"/>
-
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:paddingTop="2dp"/>
+    <!-- Date + Status -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:background="#0F0F28"
+        android:paddingTop="6dp" android:paddingBottom="6dp">
+        <TextView android:id="@+id/tvDate" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:gravity="center"
+            android:textColor="#555588" android:textSize="12sp"/>
+        <TextView android:id="@+id/tvStatus" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:gravity="center"
+            android:textSize="14sp" android:textStyle="bold" android:paddingTop="2dp"/>
     </LinearLayout>
 
-    <!-- Orders list fills remaining space -->
-    <ListView
-        android:id="@+id/lvOrders"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="#1A1A40"
-        android:dividerHeight="1dp"
+    <!-- Orders list -->
+    <ListView android:id="@+id/lvOrders"
+        android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:divider="#1A1A40" android:dividerHeight="1dp"
         android:visibility="gone"/>
-
-    <TextView
-        android:id="@+id/tvEmpty"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="center"
+    <TextView android:id="@+id/tvEmpty"
+        android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:gravity="center"
         android:text="لا توجد أجهزة نشطة\nاضغط  +إضافة جهاز  لتسجيل زبون"
-        android:textColor="#33336A"
-        android:textSize="15sp"
-        android:visibility="gone"/>
+        android:textColor="#2A2A55" android:textSize="14sp" android:visibility="gone"/>
 
-    <!-- Bottom buttons -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:background="#16163A"
-        android:orientation="horizontal"
-        android:padding="8dp">
-
-        <Button
-            android:id="@+id/btnNewDay"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="📅  إنشاء يوم جديد"
-            android:backgroundTint="#003087"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"/>
-
-        <Button
-            android:id="@+id/btnAddOrder"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="+  إضافة جهاز"
-            android:backgroundTint="#003087"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:visibility="gone"
-            android:layout_marginEnd="4dp"/>
-
-        <Button
-            android:id="@+id/btnEndDay"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="إنهاء اليوم ✓"
-            android:backgroundTint="#8B0000"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:visibility="gone"
-            android:layout_marginStart="4dp"/>
+    <!-- Bottom actions -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="58dp"
+        android:background="#16163A" android:orientation="horizontal" android:padding="8dp">
+        <Button android:id="@+id/btnNewDay"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:text="📅 إنشاء يوم جديد"
+            android:backgroundTint="#003087" android:textColor="#FFFFFF" android:textSize="15sp"/>
+        <Button android:id="@+id/btnAddOrder"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="+ إضافة جهاز"
+            android:backgroundTint="#003087" android:textColor="#FFFFFF" android:textSize="14sp"
+            android:visibility="gone" android:layout_marginEnd="4dp"/>
+        <Button android:id="@+id/btnEndDay"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="إنهاء اليوم ✓"
+            android:backgroundTint="#660000" android:textColor="#FFFFFF" android:textSize="14sp"
+            android:visibility="gone" android:layout_marginStart="4dp"/>
     </LinearLayout>
-
 </LinearLayout>

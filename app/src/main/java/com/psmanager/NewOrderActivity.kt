@@ -1,9 +1,9 @@
 package com.psmanager
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
+import android.view.*
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -11,10 +11,15 @@ import androidx.appcompat.app.AppCompatActivity
 class NewOrderActivity : AppCompatActivity() {
 
     private lateinit var db: DatabaseHelper
-    private var dayId       = 0L
-    private var hours       = 1
+    private var dayId = 0L
+    private var sessionType = "fixed"  // "fixed" or "open"
+    private var deviceNumber = ""
+    private var hours = 1
+    private var paidAmount = 0.0
+    private var hasPaid = false
     private var pricePerHour = 10.0
-    private var currency    = "ج.م"
+    private var testMode = false
+    private var currency = "ج.م"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,89 +29,146 @@ class NewOrderActivity : AppCompatActivity() {
         db           = DatabaseHelper(this)
         dayId        = intent.getLongExtra("day_id", 0L)
         pricePerHour = db.getSetting("price_per_hour")?.toDoubleOrNull() ?: 10.0
+        testMode     = db.getSetting("test_mode") == "1"
         currency     = db.getSetting("currency") ?: "ج.م"
 
         setupViews()
     }
 
-    private fun setupViews() {
-        val etDevice  = findViewById<EditText>(R.id.etDeviceNumber)
-        val btnMinus  = findViewById<Button>(R.id.btnHourMinus)
-        val btnPlus   = findViewById<Button>(R.id.btnHourPlus)
+    private fun calcFixedPrice() = hours * pricePerHour
+
+    private fun updateUI() {
+        val tvDevice  = findViewById<TextView>(R.id.tvDeviceDisplay)
         val tvHours   = findViewById<TextView>(R.id.tvSelectedHours)
-        val tvPrice   = findViewById<TextView>(R.id.tvCalculatedPrice)
-        val etPaid    = findViewById<EditText>(R.id.etAmountPaid)
+        val tvPrice   = findViewById<TextView>(R.id.tvCalcPrice)
+        val tvPaid    = findViewById<TextView>(R.id.tvPaidDisplay)
         val tvChange  = findViewById<TextView>(R.id.tvChange)
-        val btnOk     = findViewById<Button>(R.id.btnConfirm)
-        val btnBack   = findViewById<ImageButton>(R.id.btnBack)
+        val layFixed  = findViewById<LinearLayout>(R.id.layoutFixedOptions)
+        val layPay    = findViewById<LinearLayout>(R.id.layoutPayNow)
+        val btnConfirm = findViewById<Button>(R.id.btnConfirm)
 
-        btnBack.setOnClickListener { finish() }
+        tvDevice.text = if (deviceNumber.isEmpty()) "اضغط لاختيار رقم الجهاز" else "جهاز  $deviceNumber"
+        tvDevice.setTextColor(if (deviceNumber.isEmpty()) Color.parseColor("#555577") else Color.WHITE)
 
-        fun refresh() {
-            tvHours.text = "$hours"
-            val p = hours * pricePerHour
-            tvPrice.text = "${fmtN(p)} $currency"
-            recalcChange(etPaid.text.toString(), p, tvChange)
+        layFixed.visibility = if (sessionType == "fixed") View.VISIBLE else View.GONE
+        layPay.visibility   = if (sessionType == "fixed") View.VISIBLE else View.GONE
+
+        tvHours.text = "$hours"
+
+        val price = calcFixedPrice()
+        tvPrice.text = "${"%.0f".format(price)} $currency"
+
+        if (hasPaid && sessionType == "fixed") {
+            tvPaid.text = "${"%.0f".format(paidAmount)} $currency"
+            tvPaid.setTextColor(Color.parseColor("#FFD700"))
+            val change = paidAmount - price
+            if (change >= 0) {
+                tvChange.text = "الباقي للزبون:  ${"%.0f".format(change)} $currency"
+                tvChange.setTextColor(Color.parseColor("#00CC66"))
+            } else {
+                tvChange.text = "ناقص:  ${"%.0f".format(-change)} $currency"
+                tvChange.setTextColor(Color.RED)
+            }
+        } else if (sessionType == "fixed") {
+            tvPaid.text = "اضغط لإدخال المبلغ"
+            tvPaid.setTextColor(Color.parseColor("#555577"))
+            tvChange.text = ""
         }
 
-        btnMinus.setOnClickListener { if (hours > 1)  { hours--; refresh() } }
-        btnPlus.setOnClickListener  { if (hours < 24) { hours++; refresh() } }
+        btnConfirm.isEnabled = deviceNumber.isNotEmpty() &&
+            (sessionType == "open" || (hasPaid && paidAmount >= calcFixedPrice()))
+        btnConfirm.setBackgroundColor(if (btnConfirm.isEnabled) Color.parseColor("#004400")
+            else Color.parseColor("#222233"))
+    }
 
-        etPaid.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
-            override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                recalcChange(s.toString(), hours * pricePerHour, tvChange)
+    private fun setupViews() {
+        // Back button
+        findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
+
+        // Session type toggle
+        val btnFixed = findViewById<Button>(R.id.btnTypeFixed)
+        val btnOpen  = findViewById<Button>(R.id.btnTypeOpen)
+
+        fun updateTypeButtons() {
+            btnFixed.setBackgroundColor(if (sessionType=="fixed") Color.parseColor("#003087") else Color.parseColor("#1A1A3E"))
+            btnOpen.setBackgroundColor(if (sessionType=="open")  Color.parseColor("#003087") else Color.parseColor("#1A1A3E"))
+        }
+
+        btnFixed.setOnClickListener { sessionType = "fixed"; updateTypeButtons(); hasPaid = false; paidAmount = 0.0; updateUI() }
+        btnOpen.setOnClickListener  { sessionType = "open";  updateTypeButtons(); updateUI() }
+        updateTypeButtons()
+
+        // Device number picker
+        findViewById<TextView>(R.id.tvDeviceDisplay).setOnClickListener {
+            NumpadDialog(this, "رقم الجهاز", showDecimal = false, integerOnly = true) { v ->
+                deviceNumber = v.trimStart('0').ifEmpty { v }
+                updateUI()
+            }.show()
+        }
+
+        // Hours picker (fixed session)
+        findViewById<Button>(R.id.btnHourMinus).setOnClickListener {
+            if (hours > 1) { hours--; hasPaid = false; paidAmount = 0.0; updateUI() }
+        }
+        findViewById<Button>(R.id.btnHourPlus).setOnClickListener {
+            if (hours < 24) { hours++; hasPaid = false; paidAmount = 0.0; updateUI() }
+        }
+
+        // Paid amount picker
+        findViewById<TextView>(R.id.tvPaidDisplay).setOnClickListener {
+            if (sessionType == "fixed") {
+                NumpadDialog(this, "المبلغ المدفوع من الزبون") { v ->
+                    paidAmount = v.toDoubleOrNull() ?: 0.0
+                    hasPaid = true
+                    updateUI()
+                }.show()
             }
-        })
+        }
 
-        refresh()
+        // Confirm
+        findViewById<Button>(R.id.btnConfirm).setOnClickListener {
+            if (deviceNumber.isEmpty()) return@setOnClickListener
 
-        btnOk.setOnClickListener {
-            val device = etDevice.text.toString().trim()
-            val paidStr = etPaid.text.toString().trim()
+            val now = System.currentTimeMillis()
+            val unitMs = if (testMode) 10_000L else 3_600_000L
 
-            if (device.isEmpty()) { etDevice.error = "أدخل رقم الجهاز"; return@setOnClickListener }
+            val order = when (sessionType) {
+                "open" -> Order(
+                    dayId = dayId, deviceNumber = deviceNumber,
+                    sessionType = "open", hours = 0,
+                    price = 0.0, paid = 0.0, changeAmount = 0.0,
+                    startTime = now, endTime = 0L
+                )
+                else -> {
+                    val price = calcFixedPrice()
+                    val change = paidAmount - price
+                    Order(
+                        dayId = dayId, deviceNumber = deviceNumber,
+                        sessionType = "fixed", hours = hours,
+                        price = price, paid = paidAmount, changeAmount = change,
+                        startTime = now, endTime = now + hours * unitMs
+                    )
+                }
+            }
 
-            val price  = hours * pricePerHour
-            val paid   = paidStr.toDoubleOrNull() ?: 0.0
+            db.createOrder(order)
 
-            if (paid < price) { etPaid.error = "المبلغ أقل من السعر"; return@setOnClickListener }
-
-            val change  = paid - price
-            val now     = System.currentTimeMillis()
-            val endTime = now + hours * 3_600_000L
-
-            db.createOrder(Order(
-                dayId = dayId, deviceNumber = device, hours = hours,
-                price = price, paid = paid, changeAmount = change,
-                startTime = now, endTime = endTime
-            ))
+            val msg = if (sessionType == "open")
+                "جهاز $deviceNumber  —  جلسة مفتوحة ∞\nالعداد بدأ يحسب!"
+            else {
+                "جهاز $deviceNumber  —  ${hours} ساعة\n" +
+                "السعر: ${"%.0f".format(calcFixedPrice())} $currency\n" +
+                "الباقي للزبون: ${"%.0f".format(paidAmount - calcFixedPrice())} $currency"
+            }
 
             AlertDialog.Builder(this)
-                .setTitle("✅ تم إضافة الجهاز")
-                .setMessage(
-                    "الجهاز:  $device\n" +
-                    "المدة:  $hours ساعة\n" +
-                    "السعر:  ${fmtN(price)} $currency\n" +
-                    "دفع:  ${fmtN(paid)} $currency\n\n" +
-                    "الباقي للزبون:  ${fmtN(change)} $currency"
-                )
+                .setTitle("✅ تمت إضافة الجهاز")
+                .setMessage(msg)
                 .setPositiveButton("حسناً") { _, _ -> finish() }
                 .setCancelable(false)
                 .show()
         }
-    }
 
-    private fun recalcChange(paidStr: String, price: Double, tv: TextView) {
-        val paid   = paidStr.toDoubleOrNull() ?: 0.0
-        val change = paid - price
-        when {
-            paid <= 0  -> { tv.text = ""; }
-            change >= 0 -> { tv.text = "الباقي: ${fmtN(change)} $currency"; tv.setTextColor(Color.parseColor("#00CC66")) }
-            else        -> { tv.text = "ناقص: ${fmtN(-change)} $currency";  tv.setTextColor(Color.RED) }
-        }
+        updateUI()
     }
-
-    private fun fmtN(n: Double) = "%.0f".format(n)
 }

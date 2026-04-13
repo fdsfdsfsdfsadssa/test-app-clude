@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="64dp"
+    android:orientation="horizontal" android:gravity="center_vertical"
+    android:padding="12dp" android:background="#0F0F28" android:layoutDirection="rtl">
+
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="1" android:orientation="vertical">
+        <TextView android:id="@+id/tvDayDate"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#CCCCEE" android:textSize="14sp" android:textStyle="bold"/>
+        <TextView android:id="@+id/tvDayCount"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#666688" android:textSize="12sp"/>
+    </LinearLayout>
+
+    <TextView android:id="@+id/tvDayTotal"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:textColor="#FFD700" android:textSize="18sp" android:textStyle="bold"/>
+</LinearLayout>
